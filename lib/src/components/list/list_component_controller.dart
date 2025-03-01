@@ -22,8 +22,23 @@ abstract class ListComponentController<T> extends GetxController {
     List<dynamic>? filters,
     List<Map<String, dynamic>>? orderBys,
   });
-  void handleItemTap(T item);
-  Future<void> deleteItem(T item);
+  Future<void> handleItemTap(T item) async {}
+  Future<void> deleteItem(T item) async {}
+  Future<void> onDismissed(DismissDirection direction, T item) async {}
+  void toggleSelection(T item) {
+    if (selectedItems.contains(item)) {
+      selectedItems.remove(item);
+    } else {
+      selectedItems.add(item);
+    }
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      selectedItems.refresh();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      items.refresh();
+    });
+  }
   // =====================================================
 
   @override
@@ -102,22 +117,6 @@ abstract class ListComponentController<T> extends GetxController {
         hasMore.value &&
         scrollController.position.pixels >=
             scrollController.position.maxScrollExtent - 200;
-  }
-
-  //Função para selecionar um item
-  void toggleSelection(T item) {
-    if (selectedItems.contains(item)) {
-      selectedItems.remove(item);
-    } else {
-      selectedItems.add(item);
-    }
-
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      selectedItems.refresh();
-    });
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      items.refresh();
-    });
   }
 
   //Função para identificar e atualizar o model dentro dos items

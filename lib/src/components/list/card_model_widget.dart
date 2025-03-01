@@ -15,8 +15,8 @@ class CardModel<T> extends CardWidget<T> {
       return Dismissible(
         key: Key(model.hashCode.toString()),
         direction: DismissDirection.endToStart,
-        background: _buildDismissibleBackground(),
-        onDismissed: (_) => controller.deleteItem(model),
+        background: _buildDismissibleBackground,
+        onDismissed: (direction) => controller.onDismissed(direction, model),
         child: InkWell(
           onTap: controller.isSelectionState
               ? () => controller.toggleSelection(model)
@@ -54,12 +54,10 @@ class CardModel<T> extends CardWidget<T> {
     });
   }
 
-  Widget _buildDismissibleBackground() {
-    return Container(
-      alignment: Alignment.centerRight,
-      padding: const EdgeInsets.only(right: 20),
-      color: Colors.red,
-      child: const Icon(Icons.delete, color: Colors.white),
-    );
-  }
+  Widget get _buildDismissibleBackground => Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        color: Colors.red,
+        child: const Icon(Icons.delete, color: Colors.white),
+      );
 }
