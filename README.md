@@ -11,19 +11,25 @@ start using the package.
 
 ## Command
 
-- Controller
+- import
+
+```dart
+import 'package:flutter_base_components/components.dart';
+```
+
+- Create
 
 ```dart
 class AuthController extends GetxController {
   final AuthRepository _authRepository;
-  late final Command command;
+  late final Command commandSignin;
 
   AuthController(this._authRepository);
 
   @override
   void onInit() {
     super.onInit();
-    command = Command<LoggedUser, Credentials>(_signin);
+    commandSignin = Command<LoggedUser, Credentials>(_signin);
   }
 
   Future<Either<AppException, LoggedUser>> _signin(
@@ -33,34 +39,29 @@ class AuthController extends GetxController {
 }
 ```
 
-- Widget
+- Use
 
 ```dart
-class ExampleWidget extends StatelessWidget {
-  final Command<String, int> fetchCommand;
-
-  const ExampleWidget({super.key, required this.fetchCommand});
-
-  @override
-  Widget build(BuildContext context) {
-    return ValueListenableBuilder<CommandState<String>>(
-      valueListenable: fetchCommand.currentState,
-      builder: (context, state, _) {
+ValueListenableBuilder<CommandState>(
+    valueListenable: controller.commandSignin.currentState,
+    builder: (context, state, _) {
         return Column(
-          children: [
-            ElevatedButton(
-              onPressed: () => fetchCommand.execute(123),
-              child: const Text('Carregar Dados'),
-            ),
-            if (state is Loading) const CircularProgressIndicator(),
-            if (state is Success) Text('Dados: ${state.data}'),
-            if (state is Error) Text('Erro: ${state.exception}'),
-          ],
+            children: [
+                ElevatedButton(
+                    onPressed: () async {
+                        if (validator.validate(credentials).isValid) {
+                        controller.commandSignin.execute(credentials);
+                        }
+                    },
+                    child: const Text('Entrar'),
+                ),
+                if (state is Loading) const CircularProgressIndicator(),
+                if (state is Success) Text('User: ${state.data.toString()}'),
+                if (state is Error) Text('Erro: ${state.exception}'),
+            ],
         );
-      },
-    );
-  }
-}
+    },
+)
 ```
 
 ## Additional information
