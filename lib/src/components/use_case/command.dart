@@ -63,15 +63,3 @@ class Command<Result, Param> {
     }
   }
 }
-
-Command<Result, Param> createCommand<Result, Param>(
-  Future<Either<Exception, Result>> Function(Param) action, {
-  VoidCallback? onCancel,
-  int maxHistoryLength = 10,
-}) {
-  return Command<Result, Param>(
-    action,
-    onCancel: onCancel,
-    maxHistoryLength: maxHistoryLength,
-  );
-}

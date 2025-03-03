@@ -14,10 +14,22 @@ start using the package.
 - Controller
 
 ```dart
-final command = Command(getById);
+class AuthController extends GetxController {
+  final AuthRepository _authRepository;
+  late final Command command;
 
-Future<void> getById(int id) async {
-    ...
+  AuthController(this._authRepository);
+
+  @override
+  void onInit() {
+    super.onInit();
+    command = Command<LoggedUser, Credentials>(_signin);
+  }
+
+  Future<Either<AppException, LoggedUser>> _signin(
+      Credentials credentials) async {
+    return await _authRepository.signin(credentials);
+  }
 }
 ```
 
