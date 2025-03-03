@@ -34,6 +34,10 @@ warningMessageCustom(String message,
 confirmationDialogOperation({
   String title = "Confirmação",
   String message = "Deseja realmente realizar esta operação?",
+  IconData icon = Icons.warning_rounded,
+  TextStyle? titleStyle,
+  TextStyle? messageStyle,
+  Color? backgroundColor,
   required BuildContext context,
   Function()? onConfirm,
 }) {
@@ -41,6 +45,7 @@ confirmationDialogOperation({
     context: context,
     builder: (BuildContext context) {
       return AlertDialog(
+        backgroundColor: backgroundColor,
         title: Row(
           children: [
             const Icon(
@@ -49,10 +54,10 @@ confirmationDialogOperation({
               size: 26,
             ),
             const SizedBox(width: 8),
-            Text(title),
+            Text(title, style: titleStyle),
           ],
         ),
-        content: Text(message),
+        content: Text(message, style: messageStyle),
         actionsAlignment: MainAxisAlignment.spaceBetween,
         actions: <Widget>[
           TextButton(

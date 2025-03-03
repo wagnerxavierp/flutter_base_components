@@ -9,11 +9,34 @@ start using the package.
 
 ## Usage
 
-TODO: Include short and useful examples for package users. Add longer examples
-to `/example` folder.
+# Command
 
 ```dart
-const like = 'sample';
+class ExampleWidget extends StatelessWidget {
+  final Command<String, int> fetchCommand;
+
+  const ExampleWidget({super.key, required this.fetchCommand});
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<CommandState<String>>(
+      valueListenable: fetchCommand.currentState,
+      builder: (context, state, _) {
+        return Column(
+          children: [
+            ElevatedButton(
+              onPressed: () => fetchCommand.execute(123), // Parâmetro único
+              child: const Text('Carregar Dados'),
+            ),
+            if (state is Loading) const CircularProgressIndicator(),
+            if (state is Success) Text('Dados: ${state.data}'),
+            if (state is Error) Text('Erro: ${state.exception}'),
+          ],
+        );
+      },
+    );
+  }
+}
 ```
 
 ## Additional information
