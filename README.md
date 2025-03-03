@@ -11,6 +11,16 @@ start using the package.
 
 ## Command
 
+- Controller
+
+```dart
+final command = Command(getById);
+
+Future<void> getById(int id) async {
+    ...
+}
+```
+
 - Widget
 
 ```dart
@@ -27,7 +37,7 @@ class ExampleWidget extends StatelessWidget {
         return Column(
           children: [
             ElevatedButton(
-              onPressed: () => fetchCommand.execute(123), // Parâmetro único
+              onPressed: () => fetchCommand.execute(123),
               child: const Text('Carregar Dados'),
             ),
             if (state is Loading) const CircularProgressIndicator(),
