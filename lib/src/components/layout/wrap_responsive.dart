@@ -1,13 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_base_components/components.dart';
+import 'package:reorderables/reorderables.dart';
 
 class WrapResponsive extends StatelessWidget {
   final ScrollController? scrollController;
-  final List<Widget> children;
-  final double? maxWidthWrap;
-  final double? maxHeightWrap;
-  final double maxWidthItem;
-  final double minWidthItem;
-  final double? maxHeightItem;
+  final List<CardWidget> children;
   final double paddingItem;
   final Axis direction;
   final WrapAlignment alignment;
@@ -17,17 +14,13 @@ class WrapResponsive extends StatelessWidget {
   final WrapCrossAlignment crossAxisAlignment;
   final TextDirection? textDirection;
   final VerticalDirection verticalDirection;
-  final Clip clipBehavior;
+  final bool reorderable;
+  final void Function(int, int)? onReorder;
 
   const WrapResponsive({
     super.key,
     this.scrollController,
     required this.children,
-    this.maxWidthWrap,
-    this.maxHeightWrap,
-    this.maxWidthItem = 500,
-    this.minWidthItem = 250,
-    this.maxHeightItem,
     this.paddingItem = 8,
     this.direction = Axis.horizontal,
     this.alignment = WrapAlignment.start,
@@ -37,10 +30,12 @@ class WrapResponsive extends StatelessWidget {
     this.crossAxisAlignment = WrapCrossAlignment.start,
     this.textDirection,
     this.verticalDirection = VerticalDirection.down,
-    this.clipBehavior = Clip.none,
+    this.reorderable = false,
+    this.onReorder,
   });
 
-  double widthItem(BoxConstraints constraints) {
+  double widthItem(
+      BoxConstraints constraints, double minWidthItem, double maxWidthItem) {
     final spacingPerItem = minWidthItem + (paddingItem * 2);
     final itemsPerRow = (constraints.maxWidth / spacingPerItem).floor();
     double widthItem = constraints.maxWidth / itemsPerRow - (paddingItem * 2);
@@ -52,12 +47,12 @@ class WrapResponsive extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final double computedWidthItem = widthItem(constraints);
-
         return SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
           controller: scrollController,
-          child: Wrap(
+          child: ReorderableWrap(
+            onReorder: onReorder ?? _onReorder,
+            enableReorder: reorderable,
             direction: direction,
             alignment: alignment,
             spacing: spacing,
@@ -66,12 +61,11 @@ class WrapResponsive extends StatelessWidget {
             crossAxisAlignment: crossAxisAlignment,
             textDirection: textDirection,
             verticalDirection: verticalDirection,
-            clipBehavior: clipBehavior,
             children: children.map((child) {
               return Container(
                 constraints: BoxConstraints(
-                  maxWidth: computedWidthItem,
-                  maxHeight: maxHeightItem ?? double.infinity,
+                  maxWidth:
+                      widthItem(constraints, child.minWidth, child.maxWidth),
                 ),
                 margin: EdgeInsets.all(paddingItem),
                 child: child,
@@ -81,5 +75,11 @@ class WrapResponsive extends StatelessWidget {
         );
       },
     );
+  }
+
+  void _onReorder(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) {
+      return;
+    }
   }
 }

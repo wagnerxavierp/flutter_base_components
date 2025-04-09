@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:reorderables/reorderables.dart';
 
 import 'list_component_controller.dart';
 
-abstract class CardWidget<T> extends StatelessWidget {
+abstract class CardWidget<T> extends StatelessWidget
+    implements ReorderableItem {
   final T model;
   final ListComponentController<T> controller;
 

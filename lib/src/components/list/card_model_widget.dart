@@ -4,8 +4,11 @@ import 'package:get/get.dart';
 import 'card_widget.dart';
 
 class CardModel<T> extends CardWidget<T> {
-  const CardModel({super.key, required super.model, required super.controller})
-      : super(maxWidth: 400, minWidth: 300);
+  const CardModel({
+    super.key,
+    required super.model,
+    required super.controller,
+  });
 
   @override
   Widget buildCardContent(BuildContext context) {
@@ -24,10 +27,10 @@ class CardModel<T> extends CardWidget<T> {
           onLongPress: () => controller.toggleSelection(model),
           child: Container(
             decoration: BoxDecoration(
-              color: isSelected ? Colors.blue.withOpacity(0.1) : null,
+              color: isSelected ? Colors.blue.withValues(alpha: 0.1) : null,
               border: Border.all(
                 color: isSelected
-                    ? Colors.blue.withOpacity(0.7)
+                    ? Colors.blue.withValues(alpha: 0.7)
                     : Colors.transparent,
                 width: 2.0,
               ),
@@ -60,4 +63,7 @@ class CardModel<T> extends CardWidget<T> {
         color: Colors.red,
         child: const Icon(Icons.delete, color: Colors.white),
       );
+
+  @override
+  bool get reorderable => false;
 }

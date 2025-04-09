@@ -11,15 +11,19 @@ enum ListComponentType {
 }
 
 class ListComponent<T> extends StatefulWidget {
-  final ListComponentController<T> controller;
+  final ListComponentController<T> listComponentController;
   final CardWidget Function(BuildContext, T) itemBuilder;
   final ListComponentType type;
+  final ScrollController? scrollController;
+  final bool reorderable;
 
   const ListComponent({
     super.key,
-    required this.controller,
+    required this.listComponentController,
     required this.itemBuilder,
     this.type = ListComponentType.list,
+    this.scrollController,
+    this.reorderable = false,
   });
 
   @override
@@ -27,105 +31,105 @@ class ListComponent<T> extends StatefulWidget {
 }
 
 class _ListComponentState<T> extends State<ListComponent<T>> {
-  double maxWidthItem = 200;
-
-  double minWidthItem = 200;
-
-  CardWidget? cardItemWidget;
-
+  late ScrollController scrollController;
   RxBool isUpListing = false.obs;
-
   RxBool isDownListing = true.obs;
 
   @override
+  void initState() {
+    super.initState();
+    scrollController = widget.scrollController ?? ScrollController();
+
+    scrollController.addListener(
+      () {
+        if (_isDownScroll()) {
+          isDownListing.value = false;
+        } else {
+          isDownListing.value = true;
+        }
+
+        if (_isUpScroll()) {
+          isUpListing.value = false;
+        } else {
+          isUpListing.value = true;
+        }
+
+        if (_shouldLoadMore()) widget.listComponentController.loadMore();
+      },
+    );
+  }
+
+  bool _isDownScroll() =>
+      scrollController.position.pixels >=
+      scrollController.position.maxScrollExtent;
+
+  bool _isUpScroll() =>
+      scrollController.position.pixels <=
+      scrollController.position.minScrollExtent;
+
+  // Verificar se o scroll chegou ao final
+  bool _shouldLoadMore() {
+    return !widget.listComponentController.isLoading.value &&
+        widget.listComponentController.hasMore.value &&
+        scrollController.position.pixels >=
+            scrollController.position.maxScrollExtent - 200;
+  }
+
+  @override
   Widget build(BuildContext context) {
-    widget.controller.scrollController = ScrollController();
-
-    widget.controller.scrollController.addListener(() {
-      if (widget.controller.scrollController.position.pixels >=
-          widget.controller.scrollController.position.maxScrollExtent) {
-        isDownListing.value = false;
-      } else {
-        isDownListing.value = true;
-      }
-
-      if (widget.controller.scrollController.position.pixels <=
-          widget.controller.scrollController.position.minScrollExtent) {
-        isUpListing.value = false;
-      } else {
-        isUpListing.value = true;
-      }
-    });
-
     return Stack(
       children: [
-        Obx(
-          () {
-            if (widget.controller.isLoading.value) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (widget.controller.items.isEmpty &&
-                !widget.controller.isLoading.value) {
-              return InkWell(
-                onTap: widget.controller.loadInitialData,
-                child: const Center(
-                  child: Icon(Icons.refresh_rounded),
-                ),
-              );
-            }
-
-            if (widget.controller.items.isNotEmpty) {
-              cardItemWidget ??= widget.itemBuilder(
-                context,
-                widget.controller.items[0],
-              );
-
-              maxWidthItem = cardItemWidget?.maxWidth ?? maxWidthItem;
-              minWidthItem = cardItemWidget?.minWidth ?? minWidthItem;
-            }
-
+        GetBuilder(
+          init: widget.listComponentController,
+          builder: (controller) {
             return RefreshIndicator(
-              onRefresh: widget.controller.loadInitialData,
+              onRefresh: controller.loadInitialData,
               child: widget.type == ListComponentType.list
-                  ? ListView.builder(
-                      controller: widget.controller.scrollController,
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      itemCount: widget.controller.items.length +
-                          _loadingIndicatorCount,
-                      itemBuilder: (context, index) {
-                        if (index >= widget.controller.items.length) {
-                          return _buildLoadingIndicator();
-                        }
-                        return widget.itemBuilder(
-                            context, widget.controller.items[index]);
-                      },
-                    )
+                  ? widget.reorderable
+                      ? Obx(
+                          () => ReorderableListView.builder(
+                            onReorder: controller.onReorder,
+                            scrollController: scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: controller.items.length,
+                            itemBuilder: (context, index) {
+                              return widget.itemBuilder(
+                                  context, controller.items[index]);
+                            },
+                          ),
+                        )
+                      : Obx(
+                          () => ListView.builder(
+                            controller: scrollController,
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            itemCount: controller.items.length,
+                            itemBuilder: (context, index) {
+                              return widget.itemBuilder(
+                                  context, controller.items[index]);
+                            },
+                          ),
+                        )
                   : Row(
                       children: [
                         Expanded(
-                          child: WrapResponsive(
-                            scrollController:
-                                widget.controller.scrollController,
-                            maxWidthItem: maxWidthItem,
-                            minWidthItem: minWidthItem,
-                            direction: Axis.horizontal,
-                            alignment: WrapAlignment.start,
-                            runAlignment: WrapAlignment.start,
-                            children: [
-                              ...widget.controller.items.map(
-                                (element) => Obx(
-                                  () => widget.itemBuilder(
-                                    context,
-                                    widget.controller.items[widget
-                                        .controller.items
-                                        .indexOf(element)],
-                                  ),
-                                ),
-                              ),
-                              Container(
-                                height: 64,
-                                color: Colors.transparent,
-                              )
-                            ],
+                          child: Obx(
+                            () => WrapResponsive(
+                              scrollController: scrollController,
+                              direction: Axis.horizontal,
+                              alignment: WrapAlignment.start,
+                              runAlignment: WrapAlignment.start,
+                              onReorder: controller.onReorder,
+                              reorderable: widget.reorderable,
+                              children: controller.items
+                                  .map(
+                                    (element) => widget.itemBuilder(
+                                      context,
+                                      controller.items[
+                                          controller.items.indexOf(element)],
+                                    ),
+                                  )
+                                  .toList(),
+                            ),
                           ),
                         ),
                       ],
@@ -147,9 +151,8 @@ class _ListComponentState<T> extends State<ListComponent<T>> {
                   () => isUpListing.value
                       ? InkWell(
                           onTap: () {
-                            widget.controller.scrollController.animateTo(
-                              widget.controller.scrollController.position
-                                  .minScrollExtent,
+                            scrollController.animateTo(
+                              scrollController.position.minScrollExtent,
                               duration: const Duration(milliseconds: 500),
                               curve: Curves.fastOutSlowIn,
                             );
@@ -162,7 +165,7 @@ class _ListComponentState<T> extends State<ListComponent<T>> {
                               color: Colors.blue,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
+                                  color: Colors.grey.withValues(alpha: 0.5),
                                   spreadRadius: 1,
                                   blurRadius: 2,
                                   offset: const Offset(1, 1),
@@ -182,9 +185,8 @@ class _ListComponentState<T> extends State<ListComponent<T>> {
                   () => isDownListing.value
                       ? InkWell(
                           onTap: () {
-                            widget.controller.scrollController.animateTo(
-                              widget.controller.scrollController.position
-                                  .maxScrollExtent,
+                            scrollController.animateTo(
+                              scrollController.position.maxScrollExtent,
                               duration: const Duration(milliseconds: 500),
                               curve: Curves.fastOutSlowIn,
                             );
@@ -197,7 +199,7 @@ class _ListComponentState<T> extends State<ListComponent<T>> {
                               color: Colors.blue,
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.grey.withOpacity(0.5),
+                                  color: Colors.grey.withValues(alpha: 0.5),
                                   spreadRadius: 1,
                                   blurRadius: 2,
                                   offset: const Offset(1, 1),
@@ -216,21 +218,21 @@ class _ListComponentState<T> extends State<ListComponent<T>> {
               ],
             ),
           ),
-        )
+        ),
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          child: Obx(
+            () => widget.listComponentController.isLoading.value
+                ? const SizedBox(
+                    height: 4,
+                    child: LinearProgressIndicator(),
+                  )
+                : const SizedBox.shrink(),
+          ),
+        ),
       ],
-    );
-  }
-
-  int get _loadingIndicatorCount => widget.controller.hasMore.value ? 1 : 0;
-
-  Widget _buildLoadingIndicator() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 24),
-      child: Center(
-        child: widget.controller.hasMore.value
-            ? const CircularProgressIndicator()
-            : const Icon(Icons.keyboard_arrow_up_rounded),
-      ),
     );
   }
 }

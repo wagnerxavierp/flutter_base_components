@@ -5,26 +5,34 @@ import 'package:get/get.dart';
 abstract class ListComponentController<T> extends GetxController {
   final RxList<T> items = <T>[].obs;
   final RxSet<T> selectedItems = <T>{}.obs;
-  final RxBool isLoading = false.obs;
+  final RxBool isLoading = true.obs;
   final RxBool hasMore = true.obs;
   bool get isSelectionState => selectedItems.isNotEmpty;
 
-  ScrollController scrollController = ScrollController();
   int _page = 1;
   int itemsPerPage = 50;
 
-  // =====================================================
-  List<dynamic>? get filters => null;
-  List<Map<String, dynamic>>? get orderBys => null;
+  List<dynamic>? filters;
+  List<Map<String, dynamic>>? orderBys;
+
+  TextEditingController textFieldController = TextEditingController();
+  RxBool textFieldSearched = false.obs;
+  Future<void> clearSearchField();
+  Future<void> searchField(List<String> attributes);
+
   Future<Either<String, List<T>>> findPaginated({
     int page = 1,
     int limit = 50,
     List<dynamic>? filters,
     List<Map<String, dynamic>>? orderBys,
   });
+
   Future<void> handleItemTap(T item) async {}
+
   Future<void> deleteItem(T item) async {}
+
   Future<void> onDismissed(DismissDirection direction, T item) async {}
+
   void toggleSelection(T item) {
     if (selectedItems.contains(item)) {
       selectedItems.remove(item);
@@ -39,24 +47,21 @@ abstract class ListComponentController<T> extends GetxController {
       items.refresh();
     });
   }
-  // =====================================================
 
   @override
   void onInit() {
     super.onInit();
-    scrollController.addListener(_handleScroll);
     loadInitialData();
   }
 
   @override
   void onClose() {
-    scrollController.dispose();
+    textFieldController.dispose();
     super.onClose();
   }
 
   Future<void> loadInitialData() async {
     try {
-      isLoading.value = true;
       _page = 1;
 
       var resultFunction = await findPaginated(
@@ -76,7 +81,8 @@ abstract class ListComponentController<T> extends GetxController {
 
       _page++;
     } finally {
-      isLoading.value = false;
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => isLoading.value = false);
     }
   }
 
@@ -84,7 +90,8 @@ abstract class ListComponentController<T> extends GetxController {
     if (!hasMore.value || isLoading.value) return;
 
     try {
-      isLoading.value = true;
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => isLoading.value = true);
 
       var resultFunction = await findPaginated(
         page: _page,
@@ -102,21 +109,9 @@ abstract class ListComponentController<T> extends GetxController {
         },
       );
     } finally {
-      isLoading.value = false;
+      WidgetsBinding.instance
+          .addPostFrameCallback((_) => isLoading.value = false);
     }
-  }
-
-  // Buscar mais items quando o scroll chegar ao final
-  void _handleScroll() {
-    if (_shouldLoadMore()) loadMore();
-  }
-
-  // Verificar se o scroll chegou ao final
-  bool _shouldLoadMore() {
-    return !isLoading.value &&
-        hasMore.value &&
-        scrollController.position.pixels >=
-            scrollController.position.maxScrollExtent - 200;
   }
 
   //Função para identificar e atualizar o model dentro dos items
@@ -127,5 +122,11 @@ abstract class ListComponentController<T> extends GetxController {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       items.refresh();
     });
+  }
+
+  void onReorder(int oldIndex, int newIndex) {
+    if (oldIndex == newIndex) {
+      return;
+    }
   }
 }
