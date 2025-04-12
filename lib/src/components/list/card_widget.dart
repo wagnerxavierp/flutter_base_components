@@ -10,6 +10,7 @@ abstract class CardWidget<T> extends StatelessWidget
 
   final double maxWidth;
   final double minWidth;
+  final bool enableReorder;
 
   const CardWidget({
     super.key,
@@ -17,6 +18,7 @@ abstract class CardWidget<T> extends StatelessWidget
     required this.controller,
     this.maxWidth = 200,
     this.minWidth = 200,
+    this.enableReorder = false,
   });
 
   @protected

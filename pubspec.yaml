@@ -10,8 +10,9 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  get: ^4.6.6
+    
+  #Android iOS linux macOS web Windows:
+  get: ^4.7.2
   either_dart: ^1.0.0
   reorderables: ^0.6.0
 

@@ -8,6 +8,7 @@ class CardModel<T> extends CardWidget<T> {
     super.key,
     required super.model,
     required super.controller,
+    super.enableReorder,
   });
 
   @override
@@ -65,5 +66,5 @@ class CardModel<T> extends CardWidget<T> {
       );
 
   @override
-  bool get reorderable => false;
+  bool get reorderable => super.enableReorder;
 }
