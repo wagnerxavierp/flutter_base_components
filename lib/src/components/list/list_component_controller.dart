@@ -2,6 +2,8 @@
 
 import 'package:either_dart/either.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_base_components/components.dart';
+import 'package:flutter_base_components/src/components/list/list_order_by.dart';
 import 'package:get/get.dart';
 
 abstract class ListComponentController<T> extends GetxController {
@@ -14,16 +16,16 @@ abstract class ListComponentController<T> extends GetxController {
   int _page = 1;
   int itemsPerPage = 50;
 
-  List<dynamic>? filters;
-  List<Map<String, dynamic>>? orderBys;
+  List<ListFilter>? filters;
+  List<ListOrderBy>? orderBys;
 
   // Search input field ----------------------------------
   TextEditingController textFieldController = TextEditingController();
   RxBool textFieldSearched = false.obs;
 
   Future<void> clearSearchField({
-    List<dynamic>? filters,
-    List<Map<String, dynamic>>? orderBys,
+    List<ListFilter>? filters,
+    List<ListOrderBy>? orderBys,
   }) async {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       textFieldSearched.value = false;
@@ -36,8 +38,8 @@ abstract class ListComponentController<T> extends GetxController {
   }
 
   Future<void> searchField({
-    List<dynamic>? filters,
-    List<Map<String, dynamic>>? orderBys,
+    List<ListFilter>? filters,
+    List<ListOrderBy>? orderBys,
   }) async {
     if (textFieldController.text.isEmpty) {
       clearSearchField(
@@ -58,8 +60,8 @@ abstract class ListComponentController<T> extends GetxController {
   Future<Either<String, List<T>>> findItems({
     int page = 1,
     int limit = 50,
-    List<dynamic>? filters,
-    List<Map<String, dynamic>>? orderBys,
+    List<ListFilter>? filters,
+    List<ListOrderBy>? orderBys,
   });
 
   Future<void> handleItemTap(T item) async {}
